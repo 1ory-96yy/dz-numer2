@@ -1,37 +1,36 @@
+// phonebook.h
 #ifndef PHONEBOOK_H
 #define PHONEBOOK_H
 
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-
 class Contact {
 private:
-    std::string* fullName;
-    std::string homePhone;
-    std::string workPhone;
-    std::string mobilePhone;
-    std::string additionalInfo;
+    char* fullName;
+    char* homePhone;
+    char* workPhone;
+    char* mobilePhone;
+    char* additionalInfo;
 
 public:
-    Contact(const std::string& name, const std::string& home, const std::string& work, const std::string& mobile, const std::string& additional);
+    Contact(const char* name, const char* home, const char* work, const char* mobile, const char* additional);
     ~Contact();
-    std::string getName() const;
+    const char* getName() const;
     void print() const;
 };
 
 class PhoneBook {
 private:
-    std::vector<Contact*> contacts;
+    Contact** contacts;
+    int size;
+    int capacity;
 
 public:
-    void addContact(const std::string& name, const std::string& home, const std::string& work, const std::string& mobile, const std::string& additional);
-    void removeContact(const std::string& name);
-    Contact* findContact(const std::string& name) const;
+    PhoneBook();
+    void addContact(const char* name, const char* home, const char* work, const char* mobile, const char* additional);
+    void removeContact(const char* name);
+    Contact* findContact(const char* name) const;
     void printAllContacts() const;
-    void saveToFile(const std::string& filename) const;
-    void loadFromFile(const std::string& filename);
+    void saveToFile(const char* filename) const;
+    void loadFromFile(const char* filename);
     ~PhoneBook();
 };
 

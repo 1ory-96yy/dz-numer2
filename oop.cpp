@@ -1,61 +1,94 @@
 #include "oop.h"
+#include <iostream>
+#include <fstream>
 
-Contact::Contact(const std::string& name, const std::string& home, const std::string& work, const std::string& mobile, const std::string& additional)
-    : homePhone(home), workPhone(work), mobilePhone(mobile), additionalInfo(additional) {
-    fullName = new std::string(name);
+
+Contact::Contact(const char* name, const char* home, const char* work, const char* mobile, const char* additional) {
+    fullName = new char[strlen(name) + 1];
+    std::copy(name, name + strlen(name) + 1, fullName);
+    homePhone = new char[strlen(home) + 1];
+    std::copy(home, home + strlen(home) + 1, homePhone);
+    workPhone = new char[strlen(work) + 1];
+    std::copy(work, work + strlen(work) + 1, workPhone);
+    mobilePhone = new char[strlen(mobile) + 1];
+    std::copy(mobile, mobile + strlen(mobile) + 1, mobilePhone);
+    additionalInfo = new char[strlen(additional) + 1];
+    std::copy(additional, additional + strlen(additional) + 1, additionalInfo);
 }
 
 Contact::~Contact() {
-    delete fullName;
+    delete[] fullName;
+    delete[] homePhone;
+    delete[] workPhone;
+    delete[] mobilePhone;
+    delete[] additionalInfo;
 }
 
-std::string Contact::getName() const {
-    return *fullName;
+const char* Contact::getName() const {
+    return fullName;
 }
 
 void Contact::print() const {
-    std::cout << "ПІБ: " << *fullName << std::endl;
+    std::cout << "ПІБ: " << fullName << std::endl;
     std::cout << "Домашній телефон: " << homePhone << std::endl;
     std::cout << "Робочий телефон: " << workPhone << std::endl;
     std::cout << "Мобільний телефон: " << mobilePhone << std::endl;
     std::cout << "Додаткова інформація: " << additionalInfo << std::endl;
 }
 
-void PhoneBook::addContact(const std::string& name, const std::string& home, const std::string& work, const std::string& mobile, const std::string& additional) {
-    contacts.push_back(new Contact(name, home, work, mobile, additional));
+PhoneBook::PhoneBook() {
+    size = 0;
+    capacity = 10;
+    contacts = new Contact * [capacity];
 }
 
-void PhoneBook::removeContact(const std::string& name) {
-    for (auto it = contacts.begin(); it != contacts.end(); ++it) {
-        if ((*it)->getName() == name) {
-            delete* it;
-            contacts.erase(it);
+void PhoneBook::addContact(const char* name, const char* home, const char* work, const char* mobile, const char* additional) {
+    if (size == capacity) {
+        capacity *= 2;
+        Contact** newContacts = new Contact * [capacity];
+        for (int i = 0; i < size; ++i) {
+            newContacts[i] = contacts[i];
+        }
+        delete[] contacts;
+        contacts = newContacts;
+    }
+    contacts[size++] = new Contact(name, home, work, mobile, additional);
+}
+
+void PhoneBook::removeContact(const char* name) {
+    for (int i = 0; i < size; ++i) {
+        if (std::strcmp(contacts[i]->getName(), name) == 0) {
+            delete contacts[i];
+            for (int j = i; j < size - 1; ++j) {
+                contacts[j] = contacts[j + 1];
+            }
+            size--;
             break;
         }
     }
 }
 
-Contact* PhoneBook::findContact(const std::string& name) const {
-    for (auto contact : contacts) {
-        if (contact->getName() == name) {
-            return contact;
+Contact* PhoneBook::findContact(const char* name) const {
+    for (int i = 0; i < size; ++i) {
+        if (std::strcmp(contacts[i]->getName(), name) == 0) {
+            return contacts[i];
         }
     }
     return nullptr;
 }
 
 void PhoneBook::printAllContacts() const {
-    for (auto contact : contacts) {
-        contact->print();
+    for (int i = 0; i < size; ++i) {
+        contacts[i]->print();
         std::cout << std::endl;
     }
 }
 
-void PhoneBook::saveToFile(const std::string& filename) const {
+void PhoneBook::saveToFile(const char* filename) const {
     std::ofstream outFile(filename);
     if (outFile.is_open()) {
-        for (auto contact : contacts) {
-            outFile << contact->getName() << ";" << contact->getName() << ";" << contact->getName() << ";" << contact->getName() << ";" << contact->getName() << std::endl;
+        for (int i = 0; i < size; ++i) {
+            outFile << contacts[i]->getName() << ";" << contacts[i]->getName() << ";" << contacts[i]->getName() << ";" << contacts[i]->getName() << ";" << contacts[i]->getName() << std::endl;
         }
         outFile.close();
         std::cout << "Інформація збережена у файлі " << filename << std::endl;
@@ -65,27 +98,17 @@ void PhoneBook::saveToFile(const std::string& filename) const {
     }
 }
 
-void PhoneBook::loadFromFile(const std::string& filename) {
-    contacts.clear();
+void PhoneBook::loadFromFile(const char* filename) {
+    for (int i = 0; i < size; ++i) {
+        delete contacts[i];
+    }
+    size = 0;
     std::ifstream inFile(filename);
     if (inFile.is_open()) {
-        std::string line;
-        while (getline(inFile, line)) {
-            std::string name, home, work, mobile, additional;
-            size_t pos = 0;
-            pos = line.find(";");
-            name = line.substr(0, pos);
-            line.erase(0, pos + 1);
-            pos = line.find(";");
-            home = line.substr(0, pos);
-            line.erase(0, pos + 1);
-            pos = line.find(";");
-            work = line.substr(0, pos);
-            line.erase(0, pos + 1);
-            pos = line.find(";");
-            mobile = line.substr(0, pos);
-            line.erase(0, pos + 1);
-            additional = line;
+        char line[256];
+        while (inFile.getline(line, sizeof(line))) {
+            char name[256], home[256], work[256], mobile[256], additional[256];
+            sscanf_s(line, "%255[^;];%255[^;];%255[^;];%255[^;];%255[^;]", name, sizeof(name), home, sizeof(home), work, sizeof(work), mobile, sizeof(mobile), additional, sizeof(additional));
             addContact(name, home, work, mobile, additional);
         }
         inFile.close();
@@ -96,8 +119,11 @@ void PhoneBook::loadFromFile(const std::string& filename) {
     }
 }
 
+
+
 PhoneBook::~PhoneBook() {
-    for (auto contact : contacts) {
-        delete contact;
+    for (int i = 0; i < size; ++i) {
+        delete contacts[i];
     }
+    delete[] contacts;
 }
